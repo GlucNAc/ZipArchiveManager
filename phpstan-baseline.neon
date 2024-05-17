@@ -1,0 +1,6 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Parameter \\#1 \\$collection of static method GlucNAc\\\\ZipArchiveManager\\\\Transformer\\\\AbstractToArchivableFileTransformer\\:\\:getArchivableFiles\\(\\) expects Doctrine\\\\Common\\\\Collections\\\\Collection\\<int, object\\>, Doctrine\\\\Common\\\\Collections\\\\Collection\\<int, SplFileInfo\\> given\\.$#"
+			count: 1
+			path: tests/Transformer/SplFileInfoToArchivableFileTransformerTest.php

@@ -1,0 +1,55 @@
+{
+    "name": "glucnac/ziparchivemanager",
+    "type": "library",
+    "description": "A simple wrapper around PHP's ZipArchive class to make it easier to work with zip archives.",
+    "keywords": ["Zip", "Archive", "Wrapper"],
+    "homepage": "https://github.com/GlucNAc/ZipArchiveManager",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "GlucNAc",
+            "homepage": "https://github.com/GlucNAc"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/GlucNAc/ZipArchiveManager/-/issues",
+        "source": "https://github.com/GlucNAc/ZipArchiveManager"
+    },
+    "require": {
+        "php": ">=8.1",
+        "ext-zip": "*",
+        "doctrine/collections": "^2.0|^3.0",
+        "symfony/finder": "^5.4|^6.0|^7.0",
+        "symfony/options-resolver": "^5.4|^6.0|^7.0"
+    },
+    "require-dev": {
+        "mockery/mockery": "^1.5",
+        "php-parallel-lint/php-parallel-lint": "^1.3",
+        "phpstan/phpstan": "^1.8",
+        "phpstan/phpstan-mockery": "^1.1",
+        "phpunit/phpunit": "^10.1",
+        "symfony/filesystem": "^6.0",
+        "symplify/easy-coding-standard": "^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "GlucNAc\\ZipArchiveManager\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "GlucNAc\\ZipArchiveManager\\Test\\": "tests/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true,
+            "ramsey/composer-repl": true,
+            "phpstan/extension-installer": true,
+            "ergebnis/composer-normalize": true
+        },
+        "sort-packages": true
+    }
+}
