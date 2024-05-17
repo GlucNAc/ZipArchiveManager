@@ -1,0 +1,10 @@
+.idea
+.phpunit.result.cache
+.task
+compose.final.yml
+composer.lock
+/coverage
+docker/.env.local
+phpunit.xml
+/var
+/vendor

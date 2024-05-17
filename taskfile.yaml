@@ -1,0 +1,144 @@
+version: '3'
+
+vars:
+  COMPOSE_PARAMS: --env-file docker/.env.local -f compose.yml
+  COMPOSE_PARAMS_PHP: '{{.COMPOSE_PARAMS}} exec -e XDEBUG_MODE=off php'
+
+tasks:
+
+  #####################################################################################################################
+  ## DOCKER TASKS                                                                                                    ##
+  #####################################################################################################################
+
+  down:
+    desc: 'Stop and remove the containers'
+    deps:
+      - setup-docker-env-file
+    cmds:
+      - docker compose {{.COMPOSE_PARAMS}} down --remove-orphans
+
+  in:
+    desc: 'Log in to the given container'
+    cmds:
+      - docker compose {{.COMPOSE_PARAMS}} exec php ash
+
+  restart:
+    desc: 'Restart the containers'
+    cmds:
+      - task: down
+      - task: up
+
+  up:
+    desc: 'Create and start the containers'
+    deps: [setup]
+    cmds:
+      - docker compose {{.COMPOSE_PARAMS}} up -d
+
+  #####################################################################################################################
+  ## QUALITY TASKS                                                                                                   ##
+  #####################################################################################################################
+
+  tests:
+    desc: 'Run all tests'
+    cmds:
+      - task: quality
+      - task: tests-unit
+
+  quality:
+    desc: 'Run linters, check codestyle and ensure the database schema is valid'
+    deps: [vendor]
+    cmds:
+      - docker compose {{.COMPOSE_PARAMS_PHP}} vendor/bin/ecs
+      - docker compose {{.COMPOSE_PARAMS_PHP}} vendor/bin/phpstan
+
+  quality-fix:
+    desc: 'Run codestyle fixers'
+    deps: [vendor]
+    cmds:
+      - docker compose {{.COMPOSE_PARAMS_PHP}} vendor/bin/ecs --fix
+
+  phpstan:
+    desc: 'Run phpstan'
+    deps: [vendor]
+    cmds:
+      - docker compose {{.COMPOSE_PARAMS_PHP}} vendor/bin/phpstan
+
+  phpstan-generate:
+    desc: 'Generate phpstan baseline'
+    deps: [ vendor ]
+    cmds:
+      - docker compose {{.COMPOSE_PARAMS_PHP}} vendor/bin/phpstan analyse --generate-baseline phpstan-baseline.neon
+
+  tests-unit:
+    desc: 'Run unit tests'
+    deps: [vendor]
+    cmds:
+      - docker compose {{.COMPOSE_PARAMS_PHP}} vendor/bin/phpunit --testsuite=Unit
+
+  #####################################################################################################################
+  ## SETUP TASKS                                                                                                     ##
+  #####################################################################################################################
+
+  vendor:
+    desc: 'Install composer dependencies'
+    deps: [update-composer-lock]
+    run: 'once'
+    cmds:
+      - docker compose {{.COMPOSE_PARAMS_PHP}} composer install --no-scripts
+    sources:
+      - composer.lock
+    generates:
+      - vendor/**/*
+
+  #####################################################################################################################
+  ## INTERNAL TASKS                                                                                                  ##
+  #####################################################################################################################
+
+  update-composer-lock:
+    internal: true
+    desc: 'Update composer.lock file'
+    run: 'once'
+    cmds:
+      - docker compose {{.COMPOSE_PARAMS_PHP}} composer update --lock --no-scripts
+    sources:
+      - composer.json
+    generates:
+      - composer.lock
+
+  setup:
+    internal: true
+    desc: 'Setup required project files'
+    deps: [setup-composer-cache, setup-docker-bash-history, setup-docker-env-file]
+
+  setup-composer-cache:
+    internal: true
+    desc: 'Setup composer cache directory with local user permissions'
+    run: 'once'
+    cmds:
+      - mkdir ~/.composer
+    status:
+      - test -d ~/.composer
+
+  setup-docker-bash-history:
+    internal: true
+    desc: 'Setup docker bash history files with local user permissions'
+    run: 'once'
+    cmds:
+      - mkdir -p var/docker/php
+      - touch var/docker/php/.ash_history
+    status:
+      - test -f var/docker/php/.ash_history
+
+  setup-docker-env-file:
+    internal: true
+    desc: 'Setup docker local env file'
+    run: 'once'
+    cmds:
+      - cp docker/.env.dist docker/.env.local
+      - sed -i "s#{app_dir}#`pwd`#g" docker/.env.local
+      - sed -i "s#{dir_name}#`echo ${PWD##*/} `#g" docker/.env.local
+      - sed -i "s#{uid}#`id -u`#g" docker/.env.local
+      - sed -i "s#{gid}#`id -g`#g" docker/.env.local
+      - sed -i "s#{env_name}#`echo local`#g" docker/.env.local
+    status:
+      - test -f docker/.env.local

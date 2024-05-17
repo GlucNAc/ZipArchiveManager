@@ -1,0 +1,7 @@
+services:
+  php:
+    image: glucnac/php-8.1.10-fpm-alpine3.16:1.0
+    user: ${UID}:${GID}
+    volumes:
+      - ./docker/php/conf/99-php.ini:/usr/local/etc/php/conf.d/99-php.ini
+      - ./:/var/www/html
