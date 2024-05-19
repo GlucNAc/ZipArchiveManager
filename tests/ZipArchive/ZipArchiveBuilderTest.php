@@ -41,7 +41,9 @@ class ZipArchiveBuilderTest extends TestCase
 
     public function testAddFile(): void
     {
-        $relativeArchivePath = 'test.zip';
+        $this->filesystem->mkdir(self::ARCHIVE_STORAGE_PATH . '/archive_builder_test');
+
+        $relativeArchivePath = 'archive_builder_test/test.zip';
         $fileToAdd = __DIR__ . '/zip_archive_manager_dir/test0.txt';
 
         $this->zipArchiveBuilder
@@ -65,7 +67,9 @@ class ZipArchiveBuilderTest extends TestCase
      */
     public function testAddFiles(iterable $files): void
     {
-        $relativeArchivePath = 'test.zip';
+        $this->filesystem->mkdir(self::ARCHIVE_STORAGE_PATH . '/archive_builder_test');
+
+        $relativeArchivePath = 'archive_builder_test/test.zip';
 
         $this->zipArchiveBuilder
             ->new($relativeArchivePath)
@@ -88,7 +92,9 @@ class ZipArchiveBuilderTest extends TestCase
      */
     public function testBuildWithFiles(iterable $files): void
     {
-        $relativeArchivePath = 'test.zip';
+        $this->filesystem->mkdir(self::ARCHIVE_STORAGE_PATH . '/archive_builder_test');
+
+        $relativeArchivePath = 'archive_builder_test/test.zip';
 
         $this->zipArchiveBuilder->buildWithFiles($relativeArchivePath, $files);
 
