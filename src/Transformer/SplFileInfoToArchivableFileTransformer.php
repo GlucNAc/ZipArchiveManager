@@ -14,7 +14,10 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 final class SplFileInfoToArchivableFileTransformer extends AbstractToArchivableFileTransformer
 {
-    protected const TRANSFORMED_OBJECT_CLASS = SplFileInfo::class;
+    public static function getTransformedObjectClass(): string
+    {
+        return SplFileInfo::class;
+    }
 
     /**
      * @param array<string, mixed> $options

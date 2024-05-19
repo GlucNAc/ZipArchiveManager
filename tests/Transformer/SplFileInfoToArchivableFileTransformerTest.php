@@ -14,6 +14,16 @@ use SplFileInfo;
 
 final class SplFileInfoToArchivableFileTransformerTest extends TestCase
 {
+    public function testException(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            'Argument 1 passed to "GlucNAc\ZipArchiveManager\Transformer\SplFileInfoToArchivableFileTransformer::getArchivableFile()" must be an instance of "SplFileInfo", "stdClass" given.'
+        );
+
+        SplFileInfoToArchivableFileTransformer::getArchivableFile(new \stdClass());
+    }
+
     /**
      * @param Collection<int, SplFileInfo> $collection
      * @param array<string, mixed> $options
