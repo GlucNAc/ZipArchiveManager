@@ -10,6 +10,7 @@ use GlucNAc\ZipArchiveManager\File\ArchivableFileInterface;
 use GlucNAc\ZipArchiveManager\File\ArchivableFileManager;
 use GlucNAc\ZipArchiveManager\Transformer\SplFileInfoToArchivableFileTransformer;
 use GlucNAc\ZipArchiveManager\ZipArchive\ZipArchiveBuilder;
+use GlucNAc\ZipArchiveManager\ZipArchive\ZipArchiveException;
 use GlucNAc\ZipArchiveManager\ZipArchive\ZipArchiveManager;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
@@ -129,5 +130,30 @@ class ZipArchiveBuilderTest extends TestCase
                 new ArchivableFile(__DIR__ . '/zip_archive_manager_dir/tmp1/test1.txt'),
             ],
         ];
+    }
+
+    public function testAddFileWithoutNew(): void
+    {
+        $this->expectException(ZipArchiveException::class);
+        $this->expectExceptionMessage('No archive to add file to');
+
+        $this->zipArchiveBuilder->addFile('test.txt');
+    }
+
+    public function testAddFilesWithInvalidFile(): void
+    {
+        $this->expectException(ZipArchiveException::class);
+        $this->expectExceptionMessage('Invalid file');
+
+        // @phpstan-ignore-next-line
+        $this->zipArchiveBuilder->new('test.zip')->addFiles([new \stdClass()]);
+    }
+
+    public function testBuildWithoutNew(): void
+    {
+        $this->expectException(ZipArchiveException::class);
+        $this->expectExceptionMessage('No archive to build');
+
+        $this->zipArchiveBuilder->build();
     }
 }
