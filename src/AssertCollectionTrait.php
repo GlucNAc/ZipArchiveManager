@@ -5,16 +5,44 @@ declare(strict_types=1);
 namespace GlucNAc\ZipArchiveManager;
 
 use Doctrine\Common\Collections\Collection;
+use GlucNAc\ZipArchiveManager\File\ArchivableFileInterface;
+use GlucNAc\ZipArchiveManager\ZipArchive\ZipArchiveException;
 
 trait AssertCollectionTrait
 {
+    /**
+     * @param iterable<ArchivableFileInterface> $files
+     *
+     * @throws ZipArchiveException
+     */
+    protected static function assertFilesExist(iterable $files): void
+    {
+        self::assertIsIterableOf($files, ArchivableFileInterface::class);
+
+        foreach ($files as $file) {
+            self::assertFileExist($file);
+        }
+    }
+
+    /**
+     * @throws ZipArchiveException
+     */
+    protected static function assertFileExist(ArchivableFileInterface $file): void
+    {
+        if (false === file_exists($file->getFullPath())) {
+            throw new ZipArchiveException(
+                sprintf('File "%s" does not exist', $file->getFullPath())
+            );
+        }
+    }
+
     /**
      * @template T of object
      *
      * @param Collection<int, T> $collection
      * @param class-string<T> $expectedClass
      */
-    public static function assertIsCollectionOf(Collection $collection, string $expectedClass): void
+    protected static function assertIsCollectionOf(Collection $collection, string $expectedClass): void
     {
         self::assertClassExists($expectedClass);
 
@@ -39,7 +67,7 @@ trait AssertCollectionTrait
      * @param iterable<T> $iterable
      * @param class-string<T> $expectedClass
      */
-    public static function assertIsIterableOf(iterable $iterable, string $expectedClass): void
+    protected static function assertIsIterableOf(iterable $iterable, string $expectedClass): void
     {
         self::assertClassExists($expectedClass);
 
@@ -62,7 +90,7 @@ trait AssertCollectionTrait
      *
      * @param class-string<T> $expectedClass
      */
-    private static function assertClassExists(string $expectedClass): void
+    protected static function assertClassExists(string $expectedClass): void
     {
         if (!class_exists($expectedClass) && !interface_exists($expectedClass)) {
             throw new \InvalidArgumentException(

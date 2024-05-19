@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace GlucNAc\ZipArchiveManager\Test;
+namespace GlucNAc\ZipArchiveManager\Test\ZipArchive;
 
 use GlucNAc\ZipArchiveManager\ZipArchive\ZipArchiveFactory;
 use PHPUnit\Framework\TestCase;

@@ -55,34 +55,30 @@ class ZipArchiveManager
      *
      * @throws ZipArchiveException
      */
-    public function createArchiveWithFiles(
-        string $relativeArchivePath,
-        iterable $files,
-        bool $closeWhenFinished = false
-    ): ZipArchive {
-        $zip = $this->new($relativeArchivePath);
-
-        $this->addFilesToArchive($zip, $files, $closeWhenFinished);
-
-        return $zip;
-    }
-
-    /**
-     * @param iterable<ArchivableFileInterface> $files
-     *
-     * @throws ZipArchiveException
-     */
     public function addFilesToArchive(ZipArchive $zip, iterable $files, bool $closeWhenFinished = false): void
     {
         self::assertIsIterableOf($files, ArchivableFileInterface::class);
-        self::assertFilesExist($files);
 
         foreach ($files as $file) {
-            if (true !== $zip->addFile($file->getFullPath(), trim($file->getEntryName()))) {
-                throw new ZipArchiveException(
-                    sprintf('Unable to add file "%s" to archive, error code "%s"', $file->getFullPath(), $zip->status)
-                );
-            }
+            $this->addFileToArchive($zip, $file);
+        }
+
+        if ($closeWhenFinished) {
+            $this->close($zip);
+        }
+    }
+
+    /**
+     * @throws ZipArchiveException
+     */
+    public function addFileToArchive(ZipArchive $zip, ArchivableFileInterface $file, bool $closeWhenFinished = false): void
+    {
+        self::assertFileExist($file);
+
+        if (true !== $zip->addFile($file->getFullPath(), trim($file->getEntryName()))) {
+            throw new ZipArchiveException(
+                sprintf('Unable to add file "%s" to archive, error code "%s"', $file->getFullPath(), $zip->status)
+            );
         }
 
         if ($closeWhenFinished) {
@@ -119,22 +115,6 @@ class ZipArchiveManager
             throw new ZipArchiveException(
                 sprintf('Unable to close archive "%s", error code "%s"', $zip->filename, $zip->status)
             );
-        }
-    }
-
-    /**
-     * @param iterable<ArchivableFileInterface> $files
-     *
-     * @throws ZipArchiveException
-     */
-    private static function assertFilesExist(iterable $files): void
-    {
-        foreach ($files as $file) {
-            if (false === file_exists($file->getFullPath())) {
-                throw new ZipArchiveException(
-                    sprintf('File "%s" does not exist', $file->getFullPath())
-                );
-            }
         }
     }
 

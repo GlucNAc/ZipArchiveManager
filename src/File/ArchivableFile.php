@@ -6,8 +6,11 @@ namespace GlucNAc\ZipArchiveManager\File;
 
 class ArchivableFile implements ArchivableFileInterface
 {
-    private string $fullPath;
     private string|null $entryName = null;
+
+    public function __construct(private readonly string $fullPath)
+    {
+    }
 
     public function getFileName(): string
     {
@@ -22,13 +25,6 @@ class ArchivableFile implements ArchivableFileInterface
     public function getFullPath(): string
     {
         return $this->fullPath;
-    }
-
-    public function setFullPath(string $fullPath): static
-    {
-        $this->fullPath = $fullPath;
-
-        return $this;
     }
 
     /**

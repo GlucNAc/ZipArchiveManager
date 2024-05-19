@@ -121,15 +121,15 @@ final class ZipArchiveManagerTest extends TestCase
         }
     }
 
-    public function filesProvider(): \Generator
+    public static function filesProvider(): \Generator
     {
         $filesDirectory = __DIR__ . '/zip_archive_manager_dir';
 
         yield 'files stored in structure tree with relative path' => [
             [
-                (new ArchivableFile())->setFullPath($filesDirectory . '/test0.txt'),
-                (new ArchivableFile())->setFullPath($filesDirectory . '/tmp1/test1.txt'),
-                (new ArchivableFile())->setFullPath($filesDirectory . '/tmp1/tmp2/test2.txt'),
+                new ArchivableFile($filesDirectory . '/test0.txt'),
+                new ArchivableFile($filesDirectory . '/tmp1/test1.txt'),
+                new ArchivableFile($filesDirectory . '/tmp1/tmp2/test2.txt'),
             ],
         ];
     }

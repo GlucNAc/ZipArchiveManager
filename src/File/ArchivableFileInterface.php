@@ -8,8 +8,6 @@ interface ArchivableFileInterface
 {
     public function getFullPath(): string;
 
-    public function setFullPath(string $fullPath): static;
-
     public function getFileName(): string;
 
     public function getExtension(): string;

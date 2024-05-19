@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace GlucNAc\ZipArchiveManager\Transformer;
 
 use GlucNAc\ZipArchiveManager\File\ArchivableFile;
-use GlucNAc\ZipArchiveManager\File\ArchivableFileManager;
+use GlucNAc\ZipArchiveManager\File\ArchivableFileFactory;
 use SplFileInfo;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -36,7 +36,7 @@ final class SplFileInfoToArchivableFileTransformer extends AbstractToArchivableF
 
         $rootDirectory = $options['root_directory'];
 
-        return ArchivableFileManager::buildFromArray([
+        return ArchivableFileFactory::new([
             'full_path' => $filePath = $object->getPath() . DIRECTORY_SEPARATOR . $object->getFilename(),
             'entry_name' => $options['entry_name_prefix'] . self::extractFileName($filePath, $rootDirectory),
         ]);

@@ -7,38 +7,17 @@ namespace GlucNAc\ZipArchiveManager\File;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use GlucNAc\ZipArchiveManager\AssertCollectionTrait;
-use GlucNAc\ZipArchiveManager\Transformer\SplFileInfoToArchivableFileTransformer;
+use GlucNAc\ZipArchiveManager\Transformer\AbstractToArchivableFileTransformer;
 use GlucNAc\ZipArchiveManager\ZipArchive\ZipArchiveException;
+use SplFileInfo;
 use Symfony\Component\Finder\Finder;
-use Symfony\Component\OptionsResolver\OptionsResolver;
 
 final class ArchivableFileManager
 {
     use AssertCollectionTrait;
 
-    /**
-     * @param array<string, mixed> $data
-     */
-    public static function buildFromArray(array $data): ArchivableFile
+    public function __construct(private readonly AbstractToArchivableFileTransformer $toArchivableFileTransformer)
     {
-        $optionResolver = new OptionsResolver();
-
-        $optionResolver->setRequired([
-            'full_path',
-            'entry_name',
-        ]);
-
-        $optionResolver->setAllowedTypes('full_path', 'string');
-        $optionResolver->setAllowedTypes('entry_name', ['string', 'null']);
-
-        $optionResolver->setDefault('entry_name', null);
-
-        $data = $optionResolver->resolve($data);
-
-        return (new ArchivableFile())
-            ->setFullPath($data['full_path'])
-            ->setEntryName($data['entry_name'])
-        ;
     }
 
     /**
@@ -54,17 +33,32 @@ final class ArchivableFileManager
         }
 
         $finder = new Finder();
-        $storedFiles = $finder
-            ->in($filesDirectoryAbsolutePath)
-            ->files();
+        $storedFiles = $finder->in($filesDirectoryAbsolutePath)->files();
 
         $files = new ArrayCollection();
         foreach ($storedFiles as $storedFile) {
-            $files->add(SplFileInfoToArchivableFileTransformer::getArchivableFile($storedFile, [
+            $files->add($this->toArchivableFileTransformer::getArchivableFile($storedFile, [
                 'root_directory' => $filesDirectoryAbsolutePath,
             ]));
         }
 
         return $files;
+    }
+
+    /**
+     * @throws ZipArchiveException
+     */
+    public function getArchivableFileFromPath(string $fileAbsolutePath): ArchivableFile
+    {
+        if (!is_file($fileAbsolutePath) || !\is_readable($fileAbsolutePath)) {
+            throw new ZipArchiveException(
+                sprintf('File "%s" does not exist or is not readable', $fileAbsolutePath)
+            );
+        }
+
+        return $this->toArchivableFileTransformer::getArchivableFile(
+            new SplFileInfo($fileAbsolutePath),
+            ['root_directory' => '/']
+        );
     }
 }
