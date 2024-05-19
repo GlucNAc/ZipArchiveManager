@@ -95,7 +95,20 @@ class ZipArchiveManager
             $this->createDirectory($destinationPath);
         }
 
-        if (true !== $zip->extractTo($destinationPath)) {
+        $ok = false;
+        $error = null;
+
+        try {
+            $ok = $zip->extractTo($destinationPath);
+        } catch (\Throwable $e) {
+            $error = $e->getMessage();
+        }
+
+        if (!$ok) {
+            $error = $error ?? (string) $zip->status;
+        }
+
+        if ($error !== null) {
             throw new ZipArchiveException(
                 sprintf('Unable to extract archive to "%s", error code "%s"', $destinationPath, $zip->status)
             );
@@ -111,9 +124,22 @@ class ZipArchiveManager
      */
     public function close(ZipArchive $zip): void
     {
-        if (true !== $zip->close()) {
+        $ok = false;
+        $error = null;
+
+        try {
+            $ok = $zip->close();
+        } catch (\Throwable $e) {
+            $error = $e->getMessage();
+        }
+
+        if (!$ok) {
+            $error = $error ?? (string) $zip->status;
+        }
+
+        if ($error !== null) {
             throw new ZipArchiveException(
-                sprintf('Unable to close archive "%s", error code "%s"', $zip->filename, $zip->status)
+                sprintf('Unable to close archive "%s", error "%s"', $zip->filename, $error)
             );
         }
     }
@@ -124,7 +150,9 @@ class ZipArchiveManager
     private function createDirectory(string $directory): void
     {
         if (!mkdir($directory) && !is_dir($directory)) {
+            // @codeCoverageIgnoreStart
             throw new ZipArchiveException(sprintf('Directory "%s" was not created', $directory));
+            // @codeCoverageIgnoreEnd
         }
     }
 }

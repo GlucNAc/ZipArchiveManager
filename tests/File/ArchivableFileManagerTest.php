@@ -12,6 +12,24 @@ use PHPUnit\Framework\TestCase;
 
 final class ArchivableFileManagerTest extends TestCase
 {
+    public function testGetArchivableFileFromPathException(): void
+    {
+        $archivableFileManager = new ArchivableFileManager(new SplFileInfoToArchivableFileTransformer());
+
+        $this->expectExceptionMessage('File "not_existing_file" does not exist or is not readable');
+
+        $archivableFileManager->getArchivableFileFromPath('not_existing_file');
+    }
+
+    public function testGetArchivableFilesFromPathException(): void
+    {
+        $archivableFileManager = new ArchivableFileManager(new SplFileInfoToArchivableFileTransformer());
+
+        $this->expectExceptionMessage('Directory "not_existing_dir" does not exist or is not readable');
+
+        $archivableFileManager->getArchivableFilesFromPath('not_existing_dir');
+    }
+
     /**
      * @dataProvider filesProvider
      */

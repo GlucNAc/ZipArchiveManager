@@ -26,9 +26,11 @@ class ZipArchiveFactory
         $zip = new ZipArchive();
 
         if (true !== $zip->open($archiveAbsolutePath, $mode)) {
+            // @codeCoverageIgnoreStart
             throw new ZipArchiveException(
                 sprintf('Unable to open archive "%s" returned error code "%s"', $archiveAbsolutePath, $zip->status)
             );
+            // @codeCoverageIgnoreEnd
         }
 
         return $zip;
