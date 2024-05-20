@@ -1,7 +1,7 @@
 <h1 align="center">GlucNAc/ZipArchiveManager</h1>
 
 <p align="center">
-    <strong>A simple wrapper around PHP's native <a href="https://www.php.net/manual/en/class.ziparchive.php">ZipArchive</a> class to make it easier to work with zip archives.</strong>
+    <strong>A simple wrapper around PHP's native <a href="https://www.php.net/manual/en/class.ziparchive.php">ZipArchive</a>, to make it easier to work with.</strong>
 </p>
 
 <p align="center">
@@ -27,7 +27,7 @@ The GlucNAc/ZipArchiveManager provides a more object-oriented interface to work 
 
 ### Creating a new ZipArchive
 
-To create a new zip archive, you can use the `ZipArchiveBuilder` class. The `ZipArchiveBuilder` class requires a `ZipArchiveManager` object to manage the storage of the archive. The `ZipArchiveBuilder` class provides a fluent interface to add files to the archive.
+To create a new zip archive, you can use the `ZipArchiveBuilder` class. The `ZipArchiveBuilder` requires a `ZipArchiveManager` object to manage the storage of the archive. The `ZipArchiveBuilder` class provides a fluent interface to add files to the archive.
 
 ```php
 use GlucNAc\ZipArchiveManager\ZipArchiveBuilder;
@@ -65,14 +65,11 @@ use GlucNAc\ZipArchiveManager\ZipArchiveBuilder;
 $zipArchiveManager = new ZipArchiveManager('/path/to/storage/archive');
 $zipArchiveBuilder = new ZipArchiveBuilder($zipArchiveManager);
 
-$zipArchive = $zipArchiveBuilder->buildWithFiles(
-    relativeArchivePath: 'test.zip',
-    files: [
-        '/path/to/file1.txt',
-        '/path/to/dir/file2.txt',
-        '/path/to/file3.txt',
-    ],
-);
+$zipArchive = $zipArchiveBuilder->buildWithFiles('test.zip', [
+    '/path/to/file1.txt',
+    '/path/to/dir/file2.txt',
+    '/path/to/file3.txt',
+]);
 ```
 
 #### Customizing the file structure in the archive
@@ -86,14 +83,11 @@ use GlucNAc\ZipArchiveManager\ZipArchiveBuilder;
 $zipArchiveManager = new ZipArchiveManager('/path/to/storage/archive');
 $zipArchiveBuilder = new ZipArchiveBuilder($zipArchiveManager);
 
-$zipArchive = $zipArchiveBuilder->buildWithFiles(
-    relativeArchivePath: 'test.zip',
-    files: [
-        '/path/to/file1.txt' => 'file1.txt',
-        '/path/to/dir/file2.txt' => 'dir/file2.txt',
-        '/path/to/file3.txt' => 'file3.txt',
-    ],
-);
+$zipArchive = $zipArchiveBuilder->buildWithFiles('test.zip', [
+    '/path/to/file1.txt' => 'file1.txt',
+    '/path/to/dir/file2.txt' => 'dir/file2.txt',
+    '/path/to/file3.txt' => 'file3.txt',
+]);
 ```
 
 Now the archive exists at `/path/to/storage/archive/test.zip`and will have this structure:
@@ -106,7 +100,19 @@ test.zip
     └── file2.txt
 ```
 
-The same result can be achieved by using the `ArchivableFileManager::getArchivableFilesFromPath` method:
+#### Adding files from a directory
+
+Given the following directory structure:
+
+```
+/path/to
+├── file1.txt
+├── file3.txt
+└── dir
+    └── file2.txt
+```
+
+If you want to create an archive with all the files in the `/path/to` directory, while keeping the structure of the files in the archive, you can use the `ZipArchiveBuilder::addFilesFromPath` method:
 
 ```php
 use GlucNAc\ZipArchiveManager\ZipArchiveBuilder;
@@ -116,20 +122,20 @@ $zipArchiveManager = new ZipArchiveManager('/path/to/storage/archive');
 $zipArchiveBuilder = new ZipArchiveBuilder($zipArchiveManager);
 
 $zipArchive = $zipArchiveBuilder->buildWithFiles(
-    relativeArchivePath: 'test.zip',
-    files: ArchivableFileManager::getArchivableFilesFromPath('/path/to'),
+    'test.zip',
+    ArchivableFileManager::getArchivableFilesFromPath('/path/to'),
 );
 ```
 
 The `ArchivableFileManager::getArchivableFilesFromPath` method returns an array of `ArchivableFile` objects, which implement the `ArchivableFileInterface` interface, and where the path of the files in the archive will be relative to the path passed to the method (`/path/to` in this case).
 
-This is work because `ZipArchiveBuilder::buildWithFiles`, `ZipArchiveBuilder::addFiles` and `ZipArchiveBuilder::addFile` methods also accepts an array of `ArchivableFileInterface` objects.
+This works because `ZipArchiveBuilder::buildWithFiles`, `ZipArchiveBuilder::addFiles` and `ZipArchiveBuilder::addFile` methods also accept an array of `ArchivableFileInterface` objects (in addition to file paths).
 
-See the [ArchivableFile](#ArchivableFile) section for more information about `ArchivableFile` objects.
+See the [ArchivableFile](#ArchivableFile) section for more information about `ArchivableFileInterface` and `ArchivableFile` objects.
 
 #### Keeping the archive open
 
-By default, `build` methods will close the archive after building it. If you want to keep the archive open, you can pass `false` as the second argument to the `build` method:
+By default, `build` methods will close the archive after building it. If you want to keep the archive open, you can pass `false` as the first argument to the `build` method:
 
 ```php
 use GlucNAc\ZipArchiveManager\ZipArchiveManager;
@@ -153,9 +159,9 @@ $zipArchive = $zipArchiveBuilder
 $zipArchiveManager->close($zipArchive);
 ```
 
-### Adding files to an existing ZipArchive
+### Adding files to an existing zip archive
 
-To add files to an existing zip archive, you juste have to open the archive with the `ZipArchiveManager::open` method
+To add files to an existing zip archive, you just have to open the archive with the `ZipArchiveManager::open` method
 and use methods described in the [Creating a new ZipArchive](#Creating-a-new-ZipArchive) section:
 
 ```php
@@ -169,7 +175,7 @@ $zipArchive = $zipArchiveManager->open('test.zip');
 
 ### Extracting files from a ZipArchive
 
-To extract files from a zip archive, simply use `ZipArchiveManager::extractFiles`:
+To extract files from a zip archive, simply use the `ZipArchiveManager::extractFiles` method:
 
 ```php
 use GlucNAc\ZipArchiveManager\ZipArchiveManager;
@@ -194,7 +200,7 @@ For this section, let's consider the following directory structure:
     └── file2.txt
 ```
 
-You may have noticed that ZipArchiveManager uses the `ArchivableFile` class to represent files that can be added to a zip archive. More precisely, ZipArchiveManager expects an object that implements the `ArchivableFileInterface` interface.
+You may have noticed that `ZipArchiveManager` uses the `ArchivableFile` class to represent files that can be added to a zip archive. More precisely, `ZipArchiveManager` expects an object that implements the [ArchivableFileInterface](src/File/ArchivableFileInterface.php). This interface defines the methods that an object must implement to be considered an archivable file. The `ArchivableFile` class provided by this package implements this interface and provides a simple way to work with files that can be added to a zip archive.
 
 ```php
 interface ArchivableFileInterface
@@ -204,8 +210,8 @@ interface ArchivableFileInterface
     public function getExtension(): string;
 
     /**
-     * This method is used to get the name of the file inside the archive. It can be useful to rename the file
-     * on the fly, or to put it in a subdirectory by returning a relative path.
+     * This method is used to get the name of the file inside the archive. It can be useful to rename
+     * the file on the fly, or to put it in a subdirectory by returning a relative path.
      */
     public function getEntryName(): string;
     public function setEntryName(string|null $entryName): static;
@@ -216,7 +222,7 @@ $archivableFile = new ArchivableFile('/path/to/file1.txt');
 $archivableFile->getFullPath();  // /path/to/file1.txt
 $archivableFile->getFileName();  // file1.txt
 $archivableFile->getExtension(); // txt
-$archivableFile->getEntryName(); // /path/to/file1.txt (by default, the entry name is the same as the full path)
+$archivableFile->getEntryName(); // /path/to/file1.txt (by default, the entry name equals the full path)
 ```
 
 You can create your own class that implements this interface, or you can use the `ArchivableFile` class provided by this package. To do so, you can use the `ArchivableFileManager::getArchivableFileFromPath` method to get an `ArchivableFile` object from a file path:
@@ -228,7 +234,7 @@ $archivableFile = ArchivableFileManager::getArchivableFileFromPath('/path/to/fil
 $archivableFile->setEntryName('file1.txt'); // This will be the path of the file in the archive
 ```
 
-You can also use the `ArchivableFileManager::getArchivableFilesFromPath` method to get an array of ArchivableFile objects from a directory path:
+You can also use the `ArchivableFileManager::getArchivableFilesFromPath` method to get an array of `ArchivableFile` objects from a directory path:
 
 ```php
 use GlucNAc\ZipArchiveManager\ArchivableFileManager;
@@ -242,7 +248,7 @@ $file2->getEntryName(); // dir/file2.txt
 $file3->getEntryName(); // file3.txt
 ```
 
-Internally, the `ArchivableFile` class uses the `SplFileInfo` class to represent files. You can also use the `ArchivableFileManager::getArchivableFilesFromPath` method to get an array of `ArchivableFile` objects from a directory path:
+Internally, the `ArchivableFile` class uses the `SplFileInfo` class to represent files. You can also use the `SplFileInfoToArchivableFileTransformer` class to transform an `SplFileInfo` object into an `ArchivableFile` object:
 
 ```php
 use GlucNAc\ZipArchiveManager\ArchivableFile;
