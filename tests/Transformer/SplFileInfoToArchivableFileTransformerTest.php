@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace GlucNAc\ZipArchiveManager\Test;
+namespace GlucNAc\ZipArchiveManager\Test\Transformer;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -14,6 +14,16 @@ use SplFileInfo;
 
 final class SplFileInfoToArchivableFileTransformerTest extends TestCase
 {
+    public function testException(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            'Argument 1 passed to "GlucNAc\ZipArchiveManager\Transformer\SplFileInfoToArchivableFileTransformer::getArchivableFile()" must be an instance of "SplFileInfo", "stdClass" given.'
+        );
+
+        SplFileInfoToArchivableFileTransformer::getArchivableFile(new \stdClass());
+    }
+
     /**
      * @param Collection<int, SplFileInfo> $collection
      * @param array<string, mixed> $options
@@ -34,12 +44,12 @@ final class SplFileInfoToArchivableFileTransformerTest extends TestCase
         self::assertSame('/azerty/tmp1/test1_0123546.txt', $files->first()->getFullPath());
 
         /**
-         * There is no need to test other values here, {@see ArchivableFileManagerTest::testBuildFromArray()} for
+         * There is no need to test other values here, {@see ArchivableFileFactoryTest::testNew()} for
          * values tests.
          */
     }
 
-    public function getArchivableFilesProvider(): Generator
+    public static function getArchivableFilesProvider(): Generator
     {
         $splFile = new SplFileInfo('/azerty/tmp1/test1_0123546.txt');
 

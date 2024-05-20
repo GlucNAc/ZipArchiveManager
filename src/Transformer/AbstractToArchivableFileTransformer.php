@@ -15,11 +15,9 @@ abstract class AbstractToArchivableFileTransformer
     use AssertCollectionTrait;
 
     /**
-     * To be defined in child class.
-     *
-     * @var class-string|null
+     * @return class-string
      */
-    protected const TRANSFORMED_OBJECT_CLASS = null;
+    abstract public static function getTransformedObjectClass(): string;
 
     /**
      * @param array<string, mixed> $options
@@ -36,16 +34,7 @@ abstract class AbstractToArchivableFileTransformer
      */
     public static function getArchivableFiles(Collection $collection, array $options = []): Collection
     {
-        if (null === static::TRANSFORMED_OBJECT_CLASS) {
-            throw new \LogicException(
-                sprintf(
-                    'The constant "%s::TRANSFORMED_OBJECT_CLASS" must be defined in the child class.',
-                    static::class,
-                )
-            );
-        }
-
-        static::assertIsCollectionOf($collection, static::TRANSFORMED_OBJECT_CLASS);
+        static::assertIsCollectionOf($collection, static::getTransformedObjectClass());
 
         /** @var Collection<int, ArchivableFile> $archivableFiles */ // For PHPStan
         $archivableFiles = $collection->map(static fn($element): ArchivableFile => static::getArchivableFile(

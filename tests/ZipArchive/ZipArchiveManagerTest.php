@@ -6,6 +6,7 @@ namespace GlucNAc\ZipArchiveManager\Test\ZipArchive;
 
 use GlucNAc\ZipArchiveManager\File\ArchivableFile;
 use GlucNAc\ZipArchiveManager\Transformer\SplFileInfoToArchivableFileTransformer;
+use GlucNAc\ZipArchiveManager\ZipArchive\ZipArchiveException;
 use GlucNAc\ZipArchiveManager\ZipArchive\ZipArchiveManager;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
@@ -30,6 +31,16 @@ final class ZipArchiveManagerTest extends TestCase
         $this->filesystem->remove(self::ARCHIVE_STORAGE_PATH);
 
         parent::tearDown();
+    }
+
+    public function testNewArchiveWithNonExistentDirectory(): void
+    {
+        $this->expectException(ZipArchiveException::class);
+        $this->expectExceptionMessageMatches('/Directory ".+" was not created/');
+
+        $relativeArchivePath = 'non_existent_directory/archive.zip';
+
+        $this->zipArchiveManager->new($relativeArchivePath);
     }
 
     /**
@@ -81,8 +92,8 @@ final class ZipArchiveManagerTest extends TestCase
 
         // Create the directory where the files will be extracted
         $extractedDirectory = "$rootArchiveDirectory/extracted";
-        $this->filesystem->mkdir(self::ARCHIVE_STORAGE_PATH . DIRECTORY_SEPARATOR . $extractedDirectory);
         $extractedDirectoryPath = self::ARCHIVE_STORAGE_PATH . DIRECTORY_SEPARATOR . $extractedDirectory;
+        $this->filesystem->mkdir($extractedDirectoryPath);
 
         // Extract the files
         $zipArchive = $this->zipArchiveManager->open($archiveRelativePath);
@@ -121,16 +132,131 @@ final class ZipArchiveManagerTest extends TestCase
         }
     }
 
-    public function filesProvider(): \Generator
+    public static function filesProvider(): \Generator
     {
         $filesDirectory = __DIR__ . '/zip_archive_manager_dir';
 
         yield 'files stored in structure tree with relative path' => [
             [
-                (new ArchivableFile())->setFullPath($filesDirectory . '/test0.txt'),
-                (new ArchivableFile())->setFullPath($filesDirectory . '/tmp1/test1.txt'),
-                (new ArchivableFile())->setFullPath($filesDirectory . '/tmp1/tmp2/test2.txt'),
+                new ArchivableFile($filesDirectory . '/test0.txt'),
+                new ArchivableFile($filesDirectory . '/tmp1/test1.txt'),
+                new ArchivableFile($filesDirectory . '/tmp1/tmp2/test2.txt'),
             ],
         ];
+    }
+
+    public function testNewInNonWritableDirectory(): void
+    {
+        $this->expectException(ZipArchiveException::class);
+        $this->expectExceptionMessageMatches('/Directory ".+" was not created/');
+
+        $relativeArchivePath = '/non_writable_directory/archive.zip';
+
+        $this->zipArchiveManager->new($relativeArchivePath);
+    }
+
+    public function testOpenNonReadableArchive(): void
+    {
+        $this->expectException(ZipArchiveException::class);
+        $this->expectExceptionMessageMatches('/Archive ".+" does not exist or is not readable/');
+
+        $relativeArchivePath = '/non_readable_archive.zip';
+
+        $this->zipArchiveManager->open($relativeArchivePath);
+    }
+
+    public function testAddNonExistentFileToArchive(): void
+    {
+        $this->expectException(ZipArchiveException::class);
+        $this->expectExceptionMessageMatches('/File ".+" does not exist/');
+        $relativeArchivePath = '/valid_archive.zip';
+        $zipArchive = $this->zipArchiveManager->new($relativeArchivePath);
+
+        $nonExistentFile = new ArchivableFile('/non_existent_file.txt');
+
+        $this->zipArchiveManager->addFileToArchive($zipArchive, $nonExistentFile);
+    }
+
+    public function testExtractToNonWritableDirectory(): void
+    {
+        $this->expectException(ZipArchiveException::class);
+        $this->expectExceptionMessageMatches('/Directory ".+" was not created/');
+
+        $relativeArchivePath = '/valid_archive.zip';
+        $zipArchive = $this->zipArchiveManager->new($relativeArchivePath);
+
+        $nonWritableDirectory = '/non_writable_directory';
+
+        $this->zipArchiveManager->extractFiles($zipArchive, $nonWritableDirectory);
+    }
+
+    public function testCloseNotOpenArchive(): void
+    {
+        $this->expectException(ZipArchiveException::class);
+        $this->expectExceptionMessageMatches('/Unable to close archive ".*", error ".+"/');
+
+        $relativeArchivePath = '/valid_archive.zip';
+        $zipArchive = $this->zipArchiveManager->new($relativeArchivePath);
+
+        $this->zipArchiveManager->close($zipArchive);
+        $this->zipArchiveManager->close($zipArchive); // Attempt to close the same archive again
+    }
+
+    public function testAddFileInInvalidZipArchive(): void
+    {
+        $this->expectException(ZipArchiveException::class);
+        $this->expectExceptionMessageMatches('/Unable to add file ".+" to archive, error code ".+"/');
+
+        $zipArchive = new \ZipArchive();
+        $archivableFile = new ArchivableFile('tests/ZipArchive/zip_archive_manager_dir/test0.txt');
+
+        $this->zipArchiveManager->addFileToArchive($zipArchive, $archivableFile);
+    }
+
+    public function testExtractFilesFromInvalideZipArchive(): void
+    {
+        $this->expectException(ZipArchiveException::class);
+        $this->expectExceptionMessageMatches('/Unable to extract archive to ".+", error code ".+"/');
+
+        $zipArchive = new \ZipArchive();
+        $destinationPath = 'tests/ZipArchive/zip_archive_manager_dir/extracted';
+
+        $this->zipArchiveManager->extractFiles($zipArchive, $destinationPath);
+    }
+
+    public function testExtractFilesWithCloseWhenFinished(): void
+    {
+        $this->filesystem->mkdir(self::ARCHIVE_STORAGE_PATH);
+        $archiveRelativePath = 'zip_archive_manager_test.zip';
+        $this->filesystem->copy(
+            __DIR__ . '/' . $archiveRelativePath,
+            self::ARCHIVE_STORAGE_PATH . '/' . $archiveRelativePath,
+        );
+
+        $zipArchive = $this->zipArchiveManager->open($archiveRelativePath);
+
+        $extractedDirectoryPath = self::ARCHIVE_STORAGE_PATH . '/archive_manager_test/extracted';
+        $this->filesystem->mkdir($extractedDirectoryPath);
+
+        $this->zipArchiveManager->extractFiles($zipArchive, $extractedDirectoryPath, true);
+
+        // Assert that the archive is closed
+        $this->expectException(ZipArchiveException::class);
+        $this->expectExceptionMessageMatches('/Unable to close archive ".*", error ".+"/');
+        $this->zipArchiveManager->close($zipArchive); // Attempt to close the same archive again
+    }
+
+    public function testAddFileToArchiveWithCloseWhenFinished(): void
+    {
+        $zipArchive = $this->zipArchiveManager->new('/zip_archive_manager_test.zip');
+
+        $archivableFile = new ArchivableFile('tests/ZipArchive/zip_archive_manager_dir/test0.txt');
+
+        $this->zipArchiveManager->addFileToArchive($zipArchive, $archivableFile, true);
+
+        // Assert that the archive is closed
+        $this->expectException(ZipArchiveException::class);
+        $this->expectExceptionMessageMatches('/Unable to close archive ".*", error ".+"/');
+        $this->zipArchiveManager->close($zipArchive); // Attempt to close the same archive again
     }
 }

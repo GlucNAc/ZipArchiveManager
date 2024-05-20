@@ -55,34 +55,30 @@ class ZipArchiveManager
      *
      * @throws ZipArchiveException
      */
-    public function createArchiveWithFiles(
-        string $relativeArchivePath,
-        iterable $files,
-        bool $closeWhenFinished = false
-    ): ZipArchive {
-        $zip = $this->new($relativeArchivePath);
-
-        $this->addFilesToArchive($zip, $files, $closeWhenFinished);
-
-        return $zip;
-    }
-
-    /**
-     * @param iterable<ArchivableFileInterface> $files
-     *
-     * @throws ZipArchiveException
-     */
     public function addFilesToArchive(ZipArchive $zip, iterable $files, bool $closeWhenFinished = false): void
     {
         self::assertIsIterableOf($files, ArchivableFileInterface::class);
-        self::assertFilesExist($files);
 
         foreach ($files as $file) {
-            if (true !== $zip->addFile($file->getFullPath(), trim($file->getEntryName()))) {
-                throw new ZipArchiveException(
-                    sprintf('Unable to add file "%s" to archive, error code "%s"', $file->getFullPath(), $zip->status)
-                );
-            }
+            $this->addFileToArchive($zip, $file);
+        }
+
+        if ($closeWhenFinished) {
+            $this->close($zip);
+        }
+    }
+
+    /**
+     * @throws ZipArchiveException
+     */
+    public function addFileToArchive(ZipArchive $zip, ArchivableFileInterface $file, bool $closeWhenFinished = false): void
+    {
+        self::assertFileExist($file);
+
+        if (true !== $zip->addFile($file->getFullPath(), trim($file->getEntryName()))) {
+            throw new ZipArchiveException(
+                sprintf('Unable to add file "%s" to archive, error code "%s"', $file->getFullPath(), $zip->status)
+            );
         }
 
         if ($closeWhenFinished) {
@@ -99,7 +95,20 @@ class ZipArchiveManager
             $this->createDirectory($destinationPath);
         }
 
-        if (true !== $zip->extractTo($destinationPath)) {
+        $ok = false;
+        $error = null;
+
+        try {
+            $ok = $zip->extractTo($destinationPath);
+        } catch (\Throwable $e) {
+            $error = $e->getMessage();
+        }
+
+        if (!$ok) {
+            $error = $error ?? (string) $zip->status;
+        }
+
+        if ($error !== null) {
             throw new ZipArchiveException(
                 sprintf('Unable to extract archive to "%s", error code "%s"', $destinationPath, $zip->status)
             );
@@ -115,26 +124,23 @@ class ZipArchiveManager
      */
     public function close(ZipArchive $zip): void
     {
-        if (true !== $zip->close()) {
-            throw new ZipArchiveException(
-                sprintf('Unable to close archive "%s", error code "%s"', $zip->filename, $zip->status)
-            );
-        }
-    }
+        $ok = false;
+        $error = null;
 
-    /**
-     * @param iterable<ArchivableFileInterface> $files
-     *
-     * @throws ZipArchiveException
-     */
-    private static function assertFilesExist(iterable $files): void
-    {
-        foreach ($files as $file) {
-            if (false === file_exists($file->getFullPath())) {
-                throw new ZipArchiveException(
-                    sprintf('File "%s" does not exist', $file->getFullPath())
-                );
-            }
+        try {
+            $ok = $zip->close();
+        } catch (\Throwable $e) {
+            $error = $e->getMessage();
+        }
+
+        if (!$ok) {
+            $error = $error ?? (string) $zip->status;
+        }
+
+        if ($error !== null) {
+            throw new ZipArchiveException(
+                sprintf('Unable to close archive "%s", error "%s"', $zip->filename, $error)
+            );
         }
     }
 
@@ -144,7 +150,9 @@ class ZipArchiveManager
     private function createDirectory(string $directory): void
     {
         if (!mkdir($directory) && !is_dir($directory)) {
+            // @codeCoverageIgnoreStart
             throw new ZipArchiveException(sprintf('Directory "%s" was not created', $directory));
+            // @codeCoverageIgnoreEnd
         }
     }
 }

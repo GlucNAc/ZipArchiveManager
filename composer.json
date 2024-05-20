@@ -1,7 +1,7 @@
 {
     "name": "glucnac/ziparchivemanager",
     "type": "library",
-    "description": "A simple wrapper around PHP's ZipArchive class to make it easier to work with zip archives.",
+    "description": "A simple wrapper around PHP's ZipArchive class that provides a more object-oriented interface to make it easier to create, extract, and modify zip archives.",
     "keywords": ["Zip", "Archive", "Wrapper"],
     "homepage": "https://github.com/GlucNAc/ZipArchiveManager",
     "license": "MIT",
