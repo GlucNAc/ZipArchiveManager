@@ -54,7 +54,7 @@ final class ZipArchiveManagerTest extends TestCase
         $relativeArchivePath = 'archive_manager_test/zip_archive_manager_test.zip';
 
         $zipArchive = $this->zipArchiveManager->new($relativeArchivePath);
-        $this->zipArchiveManager->addFilesToArchive($zipArchive, $files);
+        $this->zipArchiveManager::addFilesToArchive($zipArchive, $files);
 
         self::assertSame(\count($files), $zipArchive->numFiles);
 
@@ -66,7 +66,7 @@ final class ZipArchiveManagerTest extends TestCase
         $zipArchiveFilename = $this->filesystem->makePathRelative($zipArchive->filename, $currentDirectory);
         self::assertSame($archiveRelativePath, $zipArchiveFilename);
 
-        $this->zipArchiveManager->close($zipArchive);
+        $this->zipArchiveManager::close($zipArchive);
 
         // File exist only after closing the archive
         self::assertFileExists($archiveFullPath);
@@ -88,7 +88,7 @@ final class ZipArchiveManagerTest extends TestCase
 
         // Create the archive
         $zipArchive = $this->zipArchiveManager->new($archiveRelativePath);
-        $this->zipArchiveManager->addFilesToArchive($zipArchive, $expectedFiles, true);
+        $this->zipArchiveManager::addFilesToArchive($zipArchive, $expectedFiles, true);
 
         // Create the directory where the files will be extracted
         $extractedDirectory = "$rootArchiveDirectory/extracted";
@@ -97,7 +97,7 @@ final class ZipArchiveManagerTest extends TestCase
 
         // Extract the files
         $zipArchive = $this->zipArchiveManager->open($archiveRelativePath);
-        $this->zipArchiveManager->extractFiles($zipArchive, $extractedDirectoryPath);
+        $this->zipArchiveManager::extractFiles($zipArchive, $extractedDirectoryPath);
 
         // Transform the expected files into a collection of ArchivableFile to facilitate the comparison
         /** @var array<int, ArchivableFile> $extractedFiles */
@@ -120,7 +120,7 @@ final class ZipArchiveManagerTest extends TestCase
 
         // Ensure extraction is successful
         self::assertCount($zipArchive->count(), $extractedFiles);
-        $this->zipArchiveManager->close($zipArchive);
+        $this->zipArchiveManager::close($zipArchive);
 
         // Compare extracted files with the original ones
         self::assertCount(\count($expectedFiles), $extractedFiles);
@@ -174,7 +174,7 @@ final class ZipArchiveManagerTest extends TestCase
 
         $nonExistentFile = new ArchivableFile('/non_existent_file.txt');
 
-        $this->zipArchiveManager->addFileToArchive($zipArchive, $nonExistentFile);
+        $this->zipArchiveManager::addFileToArchive($zipArchive, $nonExistentFile);
     }
 
     public function testExtractToNonWritableDirectory(): void
@@ -187,7 +187,7 @@ final class ZipArchiveManagerTest extends TestCase
 
         $nonWritableDirectory = '/non_writable_directory';
 
-        $this->zipArchiveManager->extractFiles($zipArchive, $nonWritableDirectory);
+        $this->zipArchiveManager::extractFiles($zipArchive, $nonWritableDirectory);
     }
 
     public function testCloseNotOpenArchive(): void
@@ -198,8 +198,8 @@ final class ZipArchiveManagerTest extends TestCase
         $relativeArchivePath = '/valid_archive.zip';
         $zipArchive = $this->zipArchiveManager->new($relativeArchivePath);
 
-        $this->zipArchiveManager->close($zipArchive);
-        $this->zipArchiveManager->close($zipArchive); // Attempt to close the same archive again
+        $this->zipArchiveManager::close($zipArchive);
+        $this->zipArchiveManager::close($zipArchive); // Attempt to close the same archive again
     }
 
     public function testAddFileInInvalidZipArchive(): void
@@ -210,7 +210,7 @@ final class ZipArchiveManagerTest extends TestCase
         $zipArchive = new \ZipArchive();
         $archivableFile = new ArchivableFile('tests/ZipArchive/zip_archive_manager_dir/test0.txt');
 
-        $this->zipArchiveManager->addFileToArchive($zipArchive, $archivableFile);
+        $this->zipArchiveManager::addFileToArchive($zipArchive, $archivableFile);
     }
 
     public function testExtractFilesFromInvalideZipArchive(): void
@@ -221,7 +221,7 @@ final class ZipArchiveManagerTest extends TestCase
         $zipArchive = new \ZipArchive();
         $destinationPath = 'tests/ZipArchive/zip_archive_manager_dir/extracted';
 
-        $this->zipArchiveManager->extractFiles($zipArchive, $destinationPath);
+        $this->zipArchiveManager::extractFiles($zipArchive, $destinationPath);
     }
 
     public function testExtractFilesWithCloseWhenFinished(): void
@@ -238,12 +238,12 @@ final class ZipArchiveManagerTest extends TestCase
         $extractedDirectoryPath = self::ARCHIVE_STORAGE_PATH . '/archive_manager_test/extracted';
         $this->filesystem->mkdir($extractedDirectoryPath);
 
-        $this->zipArchiveManager->extractFiles($zipArchive, $extractedDirectoryPath, true);
+        $this->zipArchiveManager::extractFiles($zipArchive, $extractedDirectoryPath, true);
 
         // Assert that the archive is closed
         $this->expectException(ZipArchiveException::class);
         $this->expectExceptionMessageMatches('/Unable to close archive ".*", error ".+"/');
-        $this->zipArchiveManager->close($zipArchive); // Attempt to close the same archive again
+        $this->zipArchiveManager::close($zipArchive); // Attempt to close the same archive again
     }
 
     public function testAddFileToArchiveWithCloseWhenFinished(): void
@@ -252,11 +252,11 @@ final class ZipArchiveManagerTest extends TestCase
 
         $archivableFile = new ArchivableFile('tests/ZipArchive/zip_archive_manager_dir/test0.txt');
 
-        $this->zipArchiveManager->addFileToArchive($zipArchive, $archivableFile, true);
+        $this->zipArchiveManager::addFileToArchive($zipArchive, $archivableFile, true);
 
         // Assert that the archive is closed
         $this->expectException(ZipArchiveException::class);
         $this->expectExceptionMessageMatches('/Unable to close archive ".*", error ".+"/');
-        $this->zipArchiveManager->close($zipArchive); // Attempt to close the same archive again
+        $this->zipArchiveManager::close($zipArchive); // Attempt to close the same archive again
     }
 }

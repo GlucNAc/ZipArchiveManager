@@ -25,12 +25,29 @@ class ZipArchiveFactory
 
         $zip = new ZipArchive();
 
-        if (true !== $zip->open($archiveAbsolutePath, $mode)) {
-            // @codeCoverageIgnoreStart
+        $openResult = $zip->open($archiveAbsolutePath, $mode);
+
+        if ($openResult !== true) {
+            $errorMessage = match ($openResult) {
+                ZipArchive::ER_NOZIP => 'Not a zip archive',
+                ZipArchive::ER_INCONS => 'Zip archive inconsistent',
+                ZipArchive::ER_CRC => 'CRC error',
+                ZipArchive::ER_MEMORY => 'Memory allocation failure',
+                ZipArchive::ER_NOENT => 'No such file',
+                ZipArchive::ER_OPEN => 'Can\'t open file',
+                ZipArchive::ER_READ => 'Read error',
+                ZipArchive::ER_SEEK => 'Seek error',
+                default => 'Unknown error',
+            };
+
             throw new ZipArchiveException(
-                sprintf('Unable to open archive "%s" returned error code "%s"', $archiveAbsolutePath, $zip->status)
+                \sprintf(
+                    'Failed to open the ZIP file "%s" (ZipArchive error code: %d, message: %s)',
+                    $archiveAbsolutePath,
+                    $openResult,
+                    $errorMessage
+                )
             );
-            // @codeCoverageIgnoreEnd
         }
 
         return $zip;

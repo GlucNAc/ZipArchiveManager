@@ -28,7 +28,7 @@ class ZipArchiveManager
 
         $directory = \dirname($archiveFullPath);
         if (!\is_dir($directory)) {
-            $this->createDirectory($directory);
+            self::createDirectory($directory);
         }
 
         return ZipArchiveFactory::open($archiveFullPath, ZipArchive::CREATE);
@@ -55,23 +55,23 @@ class ZipArchiveManager
      *
      * @throws ZipArchiveException
      */
-    public function addFilesToArchive(ZipArchive $zip, iterable $files, bool $closeWhenFinished = false): void
+    public static function addFilesToArchive(ZipArchive $zip, iterable $files, bool $closeWhenFinished = false): void
     {
         self::assertIsIterableOf($files, ArchivableFileInterface::class);
 
         foreach ($files as $file) {
-            $this->addFileToArchive($zip, $file);
+            self::addFileToArchive($zip, $file);
         }
 
         if ($closeWhenFinished) {
-            $this->close($zip);
+            self::close($zip);
         }
     }
 
     /**
      * @throws ZipArchiveException
      */
-    public function addFileToArchive(ZipArchive $zip, ArchivableFileInterface $file, bool $closeWhenFinished = false): void
+    public static function addFileToArchive(ZipArchive $zip, ArchivableFileInterface $file, bool $closeWhenFinished = false): void
     {
         self::assertFileExist($file);
 
@@ -82,17 +82,32 @@ class ZipArchiveManager
         }
 
         if ($closeWhenFinished) {
-            $this->close($zip);
+            self::close($zip);
+        }
+    }
+
+    /**
+     * @throws ZipArchiveException
+     * @return iterable<string|false>
+     */
+    public static function getEntryIterator(ZipArchive $zip, bool $closeWhenFinished = false): iterable
+    {
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            yield $zip->getNameIndex($i);
+        }
+
+        if ($closeWhenFinished) {
+            self::close($zip);
         }
     }
 
     /**
      * @throws ZipArchiveException
      */
-    public function extractFiles(ZipArchive $zip, string $destinationPath, bool $closeWhenFinished = false): void
+    public static function extractFiles(ZipArchive $zip, string $destinationPath, bool $closeWhenFinished = false): void
     {
         if (!is_dir($destinationPath) || !is_writable($destinationPath)) {
-            $this->createDirectory($destinationPath);
+            self::createDirectory($destinationPath);
         }
 
         $ok = false;
@@ -115,14 +130,14 @@ class ZipArchiveManager
         }
 
         if ($closeWhenFinished) {
-            $this->close($zip);
+            self::close($zip);
         }
     }
 
     /**
      * @throws ZipArchiveException
      */
-    public function close(ZipArchive $zip): void
+    public static function close(ZipArchive $zip): void
     {
         $ok = false;
         $error = null;
@@ -147,7 +162,7 @@ class ZipArchiveManager
     /**
      * @throws ZipArchiveException
      */
-    private function createDirectory(string $directory): void
+    private static function createDirectory(string $directory): void
     {
         if (!mkdir($directory) && !is_dir($directory)) {
             // @codeCoverageIgnoreStart

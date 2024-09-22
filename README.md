@@ -156,7 +156,7 @@ $zipArchive = $zipArchiveBuilder
 // Do something with the archive
 
 // Close the archive: this will save the archive to the storage
-$zipArchiveManager->close($zipArchive);
+$zipArchiveManager::close($zipArchive);
 ```
 
 ### Adding files to an existing zip archive
@@ -185,7 +185,7 @@ $zipArchiveManager = new ZipArchiveManager('/path/to/storage/archive');
 // Assume the archive exists at /path/to/storage/archive/test.zip
 $zipArchive = $zipArchiveManager->open('test.zip');
 
-$zipArchiveManager->extractFiles($zipArchive, '/path/to/extracted/files/dir');
+$zipArchiveManager::extractFiles($zipArchive, '/path/to/extracted/files/dir');
 ```
 
 ### ArchivableFile

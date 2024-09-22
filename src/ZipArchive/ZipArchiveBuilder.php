@@ -44,7 +44,7 @@ class ZipArchiveBuilder
             $file = $this->archivableFileManager->getArchivableFileFromPath($file)->setEntryName($entryName);
         }
 
-        $this->zipArchiveManager->addFileToArchive($this->zipArchive, $file);
+        $this->zipArchiveManager::addFileToArchive($this->zipArchive, $file);
 
         return $this;
     }
@@ -84,7 +84,7 @@ class ZipArchiveBuilder
         $zipArchive = $this->zipArchive;
 
         if ($close) {
-            $this->zipArchiveManager->close($zipArchive);
+            $this->zipArchiveManager::close($zipArchive);
         }
 
         $this->zipArchive = null;
